@@ -25,7 +25,7 @@ constexpr int STATUS_WIDTH = 55;
 constexpr int EXPLOSION_MULTIPLIER = 7;
 
 // Really just a sanity check for functions not tested beyond this. in theory 4096 works (`InvletInvlet).
-constexpr int MAX_ITEM_IN_SQUARE = 4096;
+constexpr int MAX_ITEM_IN_SQUARE = 65536;
 // no reason to differ.
 constexpr int MAX_ITEM_IN_VEHICLE_STORAGE = MAX_ITEM_IN_SQUARE;
 // Sanity checks for volume
@@ -123,7 +123,7 @@ constexpr int MAX_SKILL = 10;
 constexpr int MAX_STAT = 14;
 
 // Maximum range at which ranged attacks can be executed.
-constexpr int RANGE_HARD_CAP = 60;
+constexpr int RANGE_HARD_CAP = 65536;
 
 // Accuracy levels which a shots tangent must be below.
 constexpr double accuracy_headshot = 0.1;
