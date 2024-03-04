@@ -948,7 +948,7 @@ class Character : public Creature, public visitable
             const item *aid = nullptr;
         };
         /** Rate point's ability to serve as a bed. Only takes certain mutations into account, and not fatigue nor stimulants. */
-        comfort_response_t base_comfort_value( const tripoint &p ) const;
+        comfort_response_t base_comfort_value( const tripoint_bub_ms &p ) const;
 
         /** Returns focus equilibrium cap due to fatigue **/
         int focus_equilibrium_fatigue_cap( int equilibrium ) const;
@@ -1030,7 +1030,6 @@ class Character : public Creature, public visitable
         bool is_running() const;
         bool is_walking() const;
         bool is_crouching() const;
-        bool is_runallfours() const;
         bool is_prone() const;
 
         int footstep_sound() const;
@@ -2372,6 +2371,13 @@ class Character : public Creature, public visitable
          * Only required for rendering.
          */
         std::vector<std::pair<std::string, std::string>> get_overlay_ids() const;
+        /**
+         * Returns a list of the IDs of overlays on this character if the character has override look mutations
+         * sorted from "lowest" to "highest".
+         *
+         * Only required for rendering.
+         */
+        std::vector<std::pair<std::string, std::string>> get_overlay_ids_when_override_look() const;
 
         // --------------- Skill Stuff ---------------
         float get_skill_level( const skill_id &ident ) const;
@@ -2609,8 +2615,10 @@ class Character : public Creature, public visitable
         /** Get the idents of all base traits. */
         std::vector<trait_id> get_base_traits() const;
         /** Get the idents of all traits/mutations. */
-        std::vector<trait_id> get_mutations( bool include_hidden = true,
-                                             bool ignore_enchantment = false ) const;
+        std::vector<trait_id> get_mutations(
+            bool include_hidden = true,
+            bool ignore_enchantment = false,
+            const std::function<bool( const mutation_branch & )> &filter = nullptr ) const;
         /** Same as above, but also grab the variant ids (or empty string if none) */
         std::vector<trait_and_var> get_mutations_variants( bool include_hidden = true,
                 bool ignore_enchantment = false ) const;
@@ -2734,6 +2742,7 @@ class Character : public Creature, public visitable
         std::optional<tripoint> last_target_pos;
         // Save favorite ammo location
         item_location ammo_location;
+        // FIXME: The presence of camps should be global objects, this should only be knowledge of camps (at best)
         std::set<tripoint_abs_omt> camps;
 
         std::vector <addiction> addictions;
@@ -3117,6 +3126,8 @@ class Character : public Creature, public visitable
         void enchantment_wear_change();
         /** Called when an item is washed */
         void on_worn_item_washed( const item &it );
+        /** Called when an item becomes filthy */
+        void on_worn_item_soiled( const item &it );
         /** Called when an item is acquired (picked up, worn, or wielded) */
         void on_item_acquire( const item &it );
         /** Called when effect intensity has been changed */
@@ -3673,6 +3684,9 @@ class Character : public Creature, public visitable
         /** Creates an auditory hallucination */
         void sound_hallu();
 
+        /** All nearby obstacles make a very quiet sound */
+        void echo_pulse();
+
         /** Checks if a Character is driving */
         bool is_driving() const;
 
@@ -3748,7 +3762,7 @@ class Character : public Creature, public visitable
         /** Checked each turn during "lying_down", returns true if the player falls asleep */
         bool can_sleep();
         /** Rate point's ability to serve as a bed. Takes all mutations, fatigue and stimulants into account. */
-        int sleep_spot( const tripoint &p ) const;
+        int sleep_spot( const tripoint_bub_ms &p ) const;
         /** Processes human-specific effects of effects before calling Creature::process_effects(). */
         void process_effects() override;
         /** Handles the still hard-coded effects. */

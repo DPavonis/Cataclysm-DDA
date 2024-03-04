@@ -1177,7 +1177,9 @@ class npc : public Character
          * @param force If there is no valid path, empty the current path.
          * @returns If it updated the path.
          */
+        // TODO: Remove untyped version.
         bool update_path( const tripoint &p, bool no_bashing = false, bool force = true );
+        bool update_path( const tripoint_bub_ms &p, bool no_bashing = false, bool force = true );
         void set_guard_pos( const tripoint_abs_ms &p );
         bool can_open_door( const tripoint &p, bool inside ) const;
         bool can_move_to( const tripoint &p, bool no_bashing = false ) const;
@@ -1209,6 +1211,12 @@ class npc : public Character
 
         // Comment on item seen
         void see_item_say_smth( const itype_id &object, const std::string &smth );
+        // Consider available storage
+        bool can_take_that( const item &it );
+        // Consider hoarding
+        bool wants_take_that( const item &it );
+        // Consider a life of crime
+        bool would_take_that( const item &it, const tripoint &p );
         // Look around and pick an item
         void find_item();
         // Move to, or grab, our targeted item
@@ -1344,6 +1352,7 @@ class npc : public Character
         // Player orders a friendly NPC to move to this position
         std::optional<tripoint_abs_ms> goto_to_this_pos;
         int last_seen_player_turn = 0; // Timeout to forgetting
+        const item *wanted_item = nullptr;
         tripoint wanted_item_pos; // The square containing an item we want
         // These are the coordinates that a guard will return to inside of their goal tripoint
         std::optional<tripoint_abs_ms> guard_pos;
@@ -1444,7 +1453,9 @@ class npc : public Character
         bool prevent_death_reminder = false; // NOLINT(cata-serialize)
 
         bool sees_dangerous_field( const tripoint &p ) const;
+        // TODO: Remove untyped version.
         bool could_move_onto( const tripoint &p ) const;
+        bool could_move_onto( const tripoint_bub_ms &p ) const;
 
         std::vector<sphere> find_dangerous_explosives() const;
 

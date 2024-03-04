@@ -55,6 +55,7 @@
 #include "translations.h"
 #include "type_id.h"
 #include "ui_manager.h"
+#include "cata_imgui.h"
 #if defined(MACOSX) || defined(__CYGWIN__)
 #   include <unistd.h> // getpid()
 #endif
@@ -167,6 +168,9 @@ void exit_handler( int s )
         } else
 #endif
         {
+#if !defined(__ANDROID__)
+            imclient.reset();
+#endif
             exit( exit_status );
         }
     }
@@ -863,7 +867,7 @@ int main( int argc, const char *argv[] )
 
         shared_ptr_fast<ui_adaptor> ui = g->create_or_get_main_ui_adaptor();
         get_event_bus().send<event_type::game_begin>( getVersionString() );
-        while( !do_turn() );
+        while( !do_turn() ) {}
     }
 
     exit_handler( -999 );

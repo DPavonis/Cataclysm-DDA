@@ -1753,6 +1753,12 @@ void options_manager::add_options_interface()
         this->add_empty_line( "interface" );
     };
 
+    add( "USE_IMGUI", "interface", to_translation( "Use ImGui UI" ),
+         to_translation( "Use new ImGui-based user interface (WARNING: EXPERIMENTAL)." ),
+         false );
+
+    add_empty_line();
+
     add( "USE_LANG", "interface", to_translation( "Language" ),
          to_translation( "Switch language.  Each percentage is the fraction of strings translated "
                          "for that language." ),
@@ -2927,7 +2933,11 @@ void options_manager::add_options_debug()
 
     add( "SKIP_VERIFICATION", "debug", to_translation( "Skip verification step during loading" ),
          to_translation( "If enabled, this skips the JSON verification step during loading.  This may give a faster loading time, but risks JSON errors not being caught until runtime." ),
+#if defined(EMSCRIPTEN)
+         true
+#else
          false
+#endif
        );
 }
 
