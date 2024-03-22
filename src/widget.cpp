@@ -584,7 +584,8 @@ void widget::set_default_var_range( const avatar &ava )
         case widget_var::cardio_fit:
             _var_min = 0;
             // Same maximum used by get_cardiofit - 3 x BMR, adjusted for mutations
-            _var_max = 3 * ava.base_bmr() * ava.mutation_value( "cardio_multiplier" );
+            _var_max = 3 * ava.base_bmr() * ava.enchantment_cache->modify_value(
+                           enchant_vals::mod::CARDIO_MULTIPLIER, 1 );
             break;
         case widget_var::carry_weight:
             _var_min = 0;
@@ -805,7 +806,7 @@ int widget::get_var_value( const avatar &ava ) const
             value = ava.movecounter;
             break;
         case widget_var::move_remainder:
-            value = ava.moves;
+            value = ava.get_moves();
             break;
         case widget_var::move_cost:
             value = ava.run_cost( 100 );

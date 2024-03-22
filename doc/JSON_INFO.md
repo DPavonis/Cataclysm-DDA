@@ -1078,7 +1078,9 @@ reference at least one body part or sub body part.
 | `limb_scores`          | (_optional_) List of arrays defining limb scores. Each array contains 2 mandatory values and 1 optional value. Value 1 is a reference to a `limb_score` id. Value 2 is a float defining the limb score's value. (optional) Value 3 is a float defining the limb score's maximum value (mostly just used for manipulator score).
 | `effects_on_hit`       | (_optional_) Array of effects that can apply whenever the limb is damaged.  For details see below.
 | `unarmed_damage`       | (_optional_) An array of objects, each detailing the amount of unarmed damage the bodypart contributes to unarmed attacks and their armor penetration. The unarmed damages of each limb are summed and added to the base unarmed damage. Should be used for limbs the character is expected to *always* attack with, for special attacks use a dedicated technique.
-| `similar_bodyparts`           | (_optional_) Array of (sub)bodypart ids.  Armor coverage is automatically extended to these bodyparts - Ex: any armor covering the bodypart `arm_l` will cover `arm_bear_l` with the same coverage in the below example.  Sublocations will need a similar definition as well to ensure correct function.  Currently bodyparts can only point at bodyparts and sub-bodyparts at sub-bodyparts. Only one step of substitution occur ( Ie. an armor covering `arm_l` will cover `arm_bear_l`, but not any similar bps defined in `arm_bear_l` )
+| `similar_bodyparts`           | (_optional_) Array of (sub)bodypart ids.  Armor coverage is automatically extended to these bodyparts - Ex: any armor covering the bodypart `arm_l` will cover `arm_bear_l` with the same coverage in the below example.  Sublocations will need a similar definition as well to ensure correct function.  Currently bodyparts can only point at bodyparts and sub-bodyparts at sub-bodyparts. 
+  Only one step of substitution occurs ( Ie. an armor covering `arm_l` will cover `arm_bear_l`, but not any similar bps defined in `arm_bear_l` ).
+  Any coverage of a similar sbp will imply coverage of the substitute subpart's parent for the sub-part in question:  Armor covering the elbows will cover similar elbows on other limbs, but not any of the other locations.
 | `armor`                | (_optional_) An object containing damage resistance values. Ex: `"armor": { "bash": 2, "cut": 1 }`. See [Part Resistance](#part-resistance) for details.
 
 ```json
@@ -1296,8 +1298,6 @@ mod = min( max, ( limb_score / denominator ) - subtract );
 | `available_upgrades`         | (_optional_) Upgrades available for this bionic, i.e. the list of bionics having this one referenced by `upgraded_bionic`.
 | `encumbrance`                | (_optional_) A list of body parts and how much this bionic encumber them.
 | `known_ma_styles`            | (_optional_) A list of martial art styles that are known to the wearer when the bionic is activated
-| `weight_capacity_bonus`      | (_optional_) Bonus to weight carrying capacity in grams, can be negative.  Strings can be used - "5000 g" or "5 kg" (default: `0`)
-| `weight_capacity_modifier`   | (_optional_) Factor modifying base weight carrying capacity. (default: `1`)
 | `canceled_mutations`         | (_optional_) A list of mutations/traits that are removed when this bionic is installed (e.g. because it replaces the fault biological part).
 | `mutation_conflicts`         | (_optional_) A list of mutations that prevent this bionic from being installed.
 | `included_bionics`           | (_optional_) Additional bionics that are installed automatically when this bionic is installed. This can be used to install several bionics from one CBM item, which is useful as each of those can be activated independently.
@@ -1322,22 +1322,20 @@ mod = min( max, ( limb_score / denominator ) - subtract );
 | `learned_spells`             | (_optional_) Map of {spell:level} you gain when installing this CBM, and lose when you uninstall this CBM. Spell classes are automatically gained.
 | `learned_proficiencies`      | (_optional_) Array of proficiency ids you gain when installing this CBM, and lose when uninstalling
 | `installation_requirement`   | (_optional_) Requirement id pointing to a requirement defining the tools and components necessary to install this CBM.
-| `vitamin_absorb_mod`         | (_optional_) Modifier to vitamin absorption, affects all vitamins. (default: `1.0`)
 | `dupes_allowed`              | (_optional_) Boolean to determine if multiple copies of this bionic can be installed.  Defaults to false.
 | `cant_remove_reason`         | (_optional_) String message to be displayed as the reason it can't be uninstalled.  Having any value other than `""` as this will prevent unistalling the bionic. Formatting includes two `%s` for example: `The Telescopic Lenses are part of %1$s eyes now. Removing them would leave %2$s blind.`  (default: `""`)
 | `social_modifiers`           | (_optional_) Json object with optional members: persuade, lie, and intimidate which add or subtract that amount from those types of social checks
-| `dispersion_mod`             | (_optional_) Modifier to change firearm dispersion.
 | `activated_on_install`       | (_optional_) Auto-activates this bionic when installed.
 | `required_bionic`            | (_optional_) Bionic which is required to install this bionic, and which cannot be uninstalled if this bionic is installed
 | `give_mut_on_removal`        | (_optional_) A list of mutations/traits that are added when this bionic is uninstalled (for example a "blind" mutation if you removed bionic eyes after installation).
 | `passive_pseudo_items`       | (_optional_) This fake item is added into player's inventory, when bionic is installed.
+| `installable_weapon_flags`   | (_optional_) Items with this flag can be installed inside this bionic
 | `fake_weapon`                | (_optional_) Activation of this bionic spawn an irremovable weapon in your hands. Require `BIONIC_TOGGLED` flag
 | `active_flags`               | (_optional_) Activation of this bionic applies this character flag
 | `auto_deactivates`           | (_optional_) Activation of this bionic automatically turn of another bionic, if character has one
 | `toggled_pseudo_items`       | (_optional_) Activation of this bionic spawn an irremovable tool in your hands.  Require `BIONIC_TOGGLED` flag
 | `spell_on_activation`        | (_optional_) Activation of this bionic allow you to cast a spell
 | `activated_close_ui`         | (_optional_) Activation of this bionic closes the bionic menu
-| `power_trickle`              | (_optional_) Having this bionic installed generate some amount of energy. Negative values can be used
 
 ```JSON
 {
@@ -1644,6 +1642,7 @@ Faults can be defined for more specialized damage of an item.
   "name": { "str": "Spent casing in chamber" }, // fault name for display
   "description": "This gun currently...", // fault description
   "item_prefix": "jammed", // optional string, items with this fault will be prefixed with this
+  "price_modifier": 0.4, // (Optional, double) Defaults to 1 if not specified. A multiplier on the price of an item when this fault is present. Values above 1.0 will increase the item's value.
   "flags": [ "JAMMED_GUN" ] // optional flags, see below
 }
 ```
@@ -3613,8 +3612,6 @@ Armor can be defined like this:
 "environmental_protection" : 0,     //  (Optional, default = 0) How much environmental protection it affords
 "encumbrance" : 0,                  // Base encumbrance (unfitted value)
 "max_encumbrance" : 0,              // When a character is completely full of volume, the encumbrance of a non-rigid storage container will be set to this. Otherwise it'll be between the encumbrance and max_encumbrance following the equation: encumbrance + (max_encumbrance - encumbrance) * non-rigid volume / non-rigid capacity.  By default, max_encumbrance is encumbrance + (non-rigid volume / 250ml).
-"weight_capacity_bonus": "20 kg",   // (Optional, default = 0) Bonus to weight carrying capacity, can be negative. Strings must be used - "5000 g" or "5 kg"
-"weight_capacity_modifier": 1.5,    // (Optional, default = 1) Factor modifying base weight carrying capacity.
 "sided": true,                      // (Optional, default false) If true, this is a sided armor. Sided armor is armor that even though it describes covering, both legs, both arms, both hands, etc. actually only covers one "side" at a time but can be moved back and forth between sides at will by the player.
 "coverage": 80,                     // What percentage of body part is covered (in general)
 "cover_melee": 60,                  // What percentage of body part is covered (against melee)
@@ -3940,6 +3937,7 @@ You can list as many conditional names for a given item as you want. Each condit
     - `COMPONENT_ID_SUBSTRING` searches all the components of the item (and all of *their* components, and so on) for an item with the condition string in their ID. The ID only needs to *contain* the condition, not match it perfectly (though it is case sensitive). For example, supplying a condition `mutant` would match `mutant_meat`.
     - `COMPONENT_ID` Similar to `COMPONENT_ID_SUBSTRING`, but search the exact component match
     - `FLAG` which checks if an item has the specified flag (exact match).
+    - `VITAMIN` which checks if an item has the specified vitamin (exact match).
     - `VAR` which checks if an item has a variable with the given name (exact match) and value = `value`. Variables set with effect_on_conditions will have `npctalk_var_` in front of their name.  So a variable created with: `"npc_add_var": "MORALE", "type": "DISPLAY","context":"NAME", "value": "Felt Great" }` would be named: `npctalk_var_DISPLAY_NAME_MORALE`.
     - `SNIPPET_ID`which checks if an item has a snippet id variable set by an effect_on_condition with the given name (exact match) and snippets id = `value`.
 2. The condition you want to look for.
@@ -4008,7 +4006,7 @@ CBMs can be defined like this:
 "fun" : 50                  // Morale effects when used
 "freezing_point": 32,       // (Optional) Temperature in C at which item freezes, default is water (32F/0C)
 "cooks_like": "meat_cooked",         // (Optional) If the item is used in a recipe, replaces it with its cooks_like
-"parasites": 10,            // (Optional) Probability of becoming parasitized when eating
+"parasites": 10,            // (Optional) one_in(x) chance of becoming parasitized when eating
 "contamination": [ { "disease": "bad_food", "probability": 5 } ],         // (Optional) List of diseases carried by this comestible and their associated probability. Values must be in the [0, 100] range.
 "vitamins": [ [ "calcium", "60 mg" ], [ "iron", 12 ] ],         // Vitamins provided by consuming a charge (portion) of this.  Some vitamins ("calcium", "iron", "vitC") can be specified with the weight of the vitamins in that food.  Vitamins specified by weight can be in grams ("g"), milligrams ("mg") or micrograms ("μg", "ug", "mcg").  If a vitamin is not specified by weight, it is specified in "units", with meaning according to the vitamin definition.  Nutrition vitamins ("calcium", "iron", "vitC") are an integer percentage of ideal daily value average.  Vitamins array keys include the following: calcium, iron, vitC, mutant_toxin, bad_food, blood, and redcells.
 "material": [                     // All materials (IDs) this food is made of

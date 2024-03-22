@@ -1363,6 +1363,8 @@ _some functions support array arguments or kwargs, denoted with square brackets 
 | vision_range()    |  ✅   |   ❌  | u, n  | Return the character's visual range, adjusted by their mutations, effects, and other issues.<br/><br/>Example:<br/> `"{ "math": [ "u_vision_range", "<", "30"] }`|
 | weather(`s`)  |  ✅  |   ✅   | N/A<br/>(global)  | Return or set a weather aspect<br/><br/>Aspect must be one of:<br/>`temperature` (in Kelvin),<br/>`humidity` (as percentage),<br/>`pressure` (in millibar),<br/>`windpower` (in mph).<br/>`precipitation` (in mm / h) either 0.5 (very_light ), 1.5 (light), or 3 (heavy). Read only.<br/><br/>Temperature conversion functions are available: `celsius()`, `fahrenheit()`, `from_celsius()`, and `from_fahrenheit()`.<br/><br/>Examples:<br/>`{ "math": [ "weather('temperature')", "<", "from_fahrenheit( 33 )" ] }`<br/>`{ "math": [ "fahrenheit( weather('temperature') )", "==", "21" ] }`|
 | damage_level()    |  ✅   |   ❌  | u, n  | Return the damage level of the talker, which must be an item.<br/><br/>Example:<br/>`"condition": { "math": [ "n_damage_level()", "<", "1" ] }`|
+| climate_control_str_heat()    |  ✅   |   ❌  | u, n  | return amount of heat climate control that character currently has (character feels better in warm places with it), in warmth points; default 0, affected by CLIMATE_CONTROL_HEAT enchantment.<br/><br/>Example:<br/>`"condition": { "math": [ "u_climate_control_str_heat()", "<", "0" ] }`|
+| climate_control_str_chill()    |  ✅   |   ❌  | u, n  | return amount of chill climate control that character currently has (character feels better in cold places with it), in warmth points; default 0, affected by CLIMATE_CONTROL_HEAT enchantment.<br/><br/>Example:<br/>`"condition": { "math": [ "n_climate_control_str_chill()", "<", "0" ] }`|
 
 #### List of Character and item aspects
 These can be read or written to with `val()`.
@@ -1411,7 +1413,7 @@ These can be read or written to with `val()`.
 | `stored_kcal` | ✅ | Stored kcal in the character's body. 55'000 is considered healthy. |
 | `stored_kcal_percentage` | ✅ | a value of 100 represents 55'000 kcal, which is considered healthy. |
 | `strength`<br/>`dexterity`<br/>`intelligence`<br/>`pereception` | ✅ | Current attributes |
-| `strength_base`<br/>`dexterity_base`<br/>`intelligence_base`<br/>`pereception_base` | ✅ | Base attributes |
+| `strength_base`<br/>`dexterity_base`<br/>`intelligence_base`<br/>`perception_base` | ✅ | Base attributes |
 | `strength_bonus`<br/>`dexterity_bonus`<br/>`intelligence_bonus`<br/>`pereception_bonus` | ✅ | Bonus attributes |
 | `thirst` | ✅ | Current thirst. |
 | `volume` | ❌ | Current volume in mL. Only works for monsters |
