@@ -68,7 +68,7 @@
       [ "muzzle", 1 ],
       [ "rail", 1 ],
       [ "sights", 1 ],
-      [ "stock", 1 ],
+      [ "pistol stock", 1 ],
       [ "underbarrel", 1 ]
     ]
   },
@@ -86,7 +86,7 @@
       [ "magazine", 1 ],
       [ "muzzle", 1 ],
       [ "sights mount", 1 ],
-      [ "stock", 1 ],
+      [ "pistol stock", 1 ],
       [ "underbarrel mount", 1 ]
     ]
   },
@@ -105,7 +105,7 @@
       [ "muzzle", 1 ],
       [ "rail mount", 1 ],
       [ "sights mount", 1 ],
-      [ "stock mount", 1 ],
+      [ "pistol stock", 1 ],
       [ "underbarrel mount", 1 ]
     ]
   },
@@ -123,7 +123,7 @@
       [ "grip", 1 ],
       [ "mechanism", 2 ],
       [ "sights", 1 ],
-      [ "stock", 1 ],
+      [ "pistol stock", 1 ],
       [ "rail mount", 1 ],
       [ "underbarrel mount", 1 ]
     ]
