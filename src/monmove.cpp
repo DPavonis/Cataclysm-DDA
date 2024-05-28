@@ -85,6 +85,11 @@ static const material_id material_iflesh( "iflesh" );
 static const species_id species_FUNGUS( "FUNGUS" );
 static const species_id species_ZOMBIE( "ZOMBIE" );
 
+static const ter_str_id ter_t_lava( "t_lava" );
+static const ter_str_id ter_t_pit( "t_pit" );
+static const ter_str_id ter_t_pit_glass( "t_pit_glass" );
+static const ter_str_id ter_t_pit_spiked( "t_pit_spiked" );
+
 bool monster::is_immune_field( const field_type_id &fid ) const
 {
     if( fid == fd_fungal_haze ) {
@@ -125,64 +130,6 @@ bool monster::is_immune_field( const field_type_id &fid ) const
 static bool z_is_valid( int z )
 {
     return z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT;
-}
-
-bool monster::monster_move_in_vehicle( const tripoint &p ) const
-{
-    map &m = get_map();
-    monster critter = *this;
-    const optional_vpart_position vp = m.veh_at( p );
-    if( vp.has_value() ) {
-        vehicle &veh = vp->vehicle();
-        units::volume capacity = 0_ml;
-        units::volume free_cargo = 0_ml;
-        auto cargo_parts = veh.get_parts_at( p, "CARGO", part_status_flag::any );
-        for( vehicle_part *&part : cargo_parts ) {
-            vehicle_stack contents = veh.get_items( *part );
-            if( !vp.part_with_feature( "CARGO_PASSABLE", false ) &&
-                !vp.part_with_feature( "APPLIANCE", false ) && !vp.part_with_feature( "OBSTACLE", false ) ) {
-                capacity += contents.max_volume();
-                free_cargo += contents.free_volume();
-            }
-        }
-        if( capacity > 0_ml ) {
-            // First, we'll try to squeeze in. Open-topped vehicle parts have more room to step over cargo.
-            if( !veh.enclosed_at( p ) ) {
-                free_cargo *= 1.2;
-            }
-            if( !veh.enclosed_at( p ) && flies() ) {
-                return true; // No amount of cargo will block a flying monster if there's no roof.
-            }
-            const creature_size size = get_size();
-            if( ( size == creature_size::tiny && free_cargo < 15625_ml ) ||
-                ( size == creature_size::small && free_cargo < 31250_ml ) ||
-                ( size == creature_size::medium && free_cargo < 62500_ml ) ||
-                ( size == creature_size::large && free_cargo < 125000_ml ) ||
-                ( size == creature_size::huge && free_cargo < 250000_ml ) ) {
-                if( ( size == creature_size::tiny && free_cargo < 11719_ml ) ||
-                    ( size == creature_size::small && free_cargo < 23438_ml ) ||
-                    ( size == creature_size::medium && free_cargo < 46875_ml ) ||
-                    ( size == creature_size::large && free_cargo < 93750_ml ) ||
-                    ( size == creature_size::huge && free_cargo < 187500_ml ) ||
-                    ( get_volume() > 850000_ml && !vp.part_with_feature( "HUGE_OK", false ) ) ) {
-                    return false; // Return false if there's just no room whatsoever. Anything over 850 liters will simply never fit in a vehicle part that isn't specifically made for it.
-                    // I'm sorry but you can't let a kaiju ride shotgun.
-                }
-                if( type->bodytype == "snake" || type->bodytype == "blob" || type->bodytype == "fish" ||
-                    has_flag( mon_flag_PLASTIC ) || has_flag( mon_flag_SMALL_HIDER ) ) {
-                    return true; // Return true if we're wiggly enough to be fine with cramped space.
-                }
-                critter.add_effect( effect_cramped_space, 2_turns, true );
-                return true; // Otherwise we add the effect and return true.
-            }
-            if( size == creature_size::huge && !vp.part_with_feature( "AISLE", false ) &&
-                !vp.part_with_feature( "HUGE_OK", false ) ) {
-                critter.add_effect( effect_cramped_space, 2_turns, true );
-                return true; // Sufficiently gigantic creatures have trouble in stock seats, roof or no.
-            }
-        }
-    }
-    return true;
 }
 
 bool monster::will_move_to( const tripoint &p ) const
@@ -264,7 +211,7 @@ bool monster::know_danger_at( const tripoint &p ) const
         const ter_id target = here.ter( p );
         if( !here.has_vehicle_floor( p ) ) {
             // Don't enter lava if we have any concept of heat being bad
-            if( avoid_fire && target == t_lava ) {
+            if( avoid_fire && target == ter_t_lava ) {
                 return false;
             }
 
@@ -276,7 +223,7 @@ bool monster::know_danger_at( const tripoint &p ) const
 
                 // Don't enter open pits ever unless tiny, can fly or climb well
                 if( !( type->size == creature_size::tiny || can_climb() ) &&
-                    ( target == t_pit || target == t_pit_spiked || target == t_pit_glass ) ) {
+                    ( target == ter_t_pit || target == ter_t_pit_spiked || target == ter_t_pit_glass ) ) {
                     return false;
                 }
             }
@@ -691,7 +638,10 @@ void monster::plan()
             }
             if( mon_plan.swarms ) {
                 if( rating < 5 ) { // Too crowded here
-                    wander_pos = get_location() + point( rng( 1, 3 ), rng( 1, 3 ) );
+                    wander_pos = get_location();
+                    while( wander_pos == get_location() ) {
+                        wander_pos += point( rng( -3, 3 ), rng( -3, 3 ) );
+                    }
                     wandf = 2;
                     mon_plan.target = nullptr;
                     // Swarm to the furthest ally you can see
@@ -1683,7 +1633,8 @@ bool monster::bash_at( const tripoint &p )
         return false;
     }
 
-    bool try_bash = !can_move_to( p ) || one_in( 3 );
+    const bool too_cramped = !can_move_to_vehicle_tile( get_map().getglobal( p ) );
+    bool try_bash = !can_move_to( p ) || one_in( 3 ) || too_cramped;
     if( !try_bash ) {
         return false;
     }
@@ -1693,7 +1644,7 @@ bool monster::bash_at( const tripoint &p )
     }
 
     map &here = get_map();
-    if( !( here.is_bashable_furn( p ) || here.veh_at( p ).obstacle_at_part() ) ) {
+    if( !( here.is_bashable_furn( p ) || here.veh_at( p ).obstacle_at_part() || too_cramped ) ) {
         // if the only thing here is road or flat, rarely bash it
         bool flat_ground = here.has_flag( ter_furn_flag::TFLAG_ROAD, p ) ||
                            here.has_flag( ter_furn_flag::TFLAG_FLAT, p );
@@ -1864,7 +1815,8 @@ bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
         }
     }
 
-    if( here.veh_at( p ).part_with_feature( VPFLAG_CARGO, true ) && !monster_move_in_vehicle( p ) ) {
+    bool cramped = false; // applies an effect if monster does end up moving there
+    if( !can_move_to_vehicle_tile( here.getglobal( p ), cramped ) ) {
         return false;
     }
 
@@ -1962,6 +1914,9 @@ bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
     optional_vpart_position vp_dest = here.veh_at( destination );
     if( vp_dest ) {
         vp_dest->vehicle().invalidate_mass();
+        if( cramped ) {
+            add_effect( effect_cramped_space, 2_turns, true );
+        }
     }
     if( is_hallucination() ) {
         //Hallucinations don't do any of the stuff after this point

@@ -46,6 +46,7 @@ static const itype_id itype_null( "null" );
 
 static const std::string flag_FULL_MAGAZINE( "FULL_MAGAZINE" );
 
+
 recipe::recipe() : skill_used( skill_id::NULL_ID() ) {}
 
 int recipe::get_difficulty( const Character &crafter ) const
@@ -477,7 +478,7 @@ static cata::value_ptr<parameterized_build_reqs> calculate_all_blueprint_reqs(
     const std::vector<std::unique_ptr<update_mapgen_function_json>> &funcs = id->funcs();
     if( funcs.size() != 1 ) {
         debugmsg( "update_mapgen %s used for blueprint, but has %zu versions, where it should have exactly one",
-                  funcs.size() );
+                  id.c_str(), funcs.size() );
         return result;
     }
 
