@@ -496,7 +496,7 @@ void computer_session::action_toll()
         reset_terminal();
     } else {
         comp.next_attempt = calendar::turn + 1_minutes;
-        sounds::sound( get_player_character().pos(), 120, sounds::sound_t::music,
+        sounds::sound( get_player_character().pos(), 120, sounds::sound_t::alarm,
                        //~ the sound of a church bell ringing
                        _( "Bohm…  Bohm…  Bohm…" ), true, "environment", "church_bells" );
 
@@ -693,7 +693,7 @@ void computer_session::action_map_sewer()
             const oter_id &oter = overmap_buffer.ter( center + offset );
             if( ( oter->get_type_id() == oter_type_sewer ) ||
                 is_ot_match( "sewage", oter, ot_match_type::prefix ) ) {
-                overmap_buffer.set_seen( center + offset, true );
+                overmap_buffer.set_seen( center + offset, om_vision_level::details );
             }
         }
     }
@@ -712,7 +712,7 @@ void computer_session::action_map_subway()
             const oter_id &oter = overmap_buffer.ter( center + offset );
             if( ( oter->get_type_id() == oter_type_subway ) ||
                 is_ot_match( "lab_train_depot", oter, ot_match_type::contains ) ) {
-                overmap_buffer.set_seen( center + offset, true );
+                overmap_buffer.set_seen( center + offset, om_vision_level::details );
             }
         }
     }
@@ -852,8 +852,6 @@ void computer_session::action_list_mutations()
         const std::vector<trait_id> category_mutations = mutations_category[category.id];
 
         uilist wmenu;
-
-        wmenu.w_x_setup = 30;
 
         for( const trait_id &traits_iter : category_mutations ) {
             wmenu.addentry( -1, true, -2, traits_iter.obj().name() );
