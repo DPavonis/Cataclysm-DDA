@@ -525,6 +525,7 @@ std::vector<item_location> Character::all_items_loc()
 std::vector<item_location> outfit::top_items_loc( Character &guy )
 {
     std::vector<item_location> ret;
+    ret.reserve( worn.size() );
     for( item &worn_it : worn ) {
         item_location worn_loc( guy, &worn_it );
         ret.push_back( worn_loc );
@@ -625,11 +626,14 @@ void Character::pick_up( const drop_locations &what )
     //todo: refactor pickup_activity_actor to just use drop_locations, also rename drop_locations
     std::vector<item_location> items;
     std::vector<int> quantities;
+    items.reserve( what.size() );
+    quantities.reserve( what.size() );
     for( const drop_location &dl : what ) {
         items.emplace_back( dl.first );
         quantities.emplace_back( dl.second );
     }
 
+    last_item = item( *items.back() ).typeId();
     assign_activity( pickup_activity_actor( items, quantities, pos_bub(), false ) );
 }
 
